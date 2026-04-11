@@ -197,201 +197,435 @@
   };
 
   /* ══════════════════════════════════════════════
-     MODE 3: QUIZ (visual number recognition)
+     MODE 3: QUIZ — ¿Cómo se dice? (스페인어 단어 맞히기)
+     숫자를 보여주고 스페인어 단어 4개 중 선택
   ══════════════════════════════════════════════ */
   const QUIZ = {
     gs: null, correct: 0,
     init() { this.start(); },
+
     start() {
       this.gs = makeGameState(() => this.start());
       this.updateUI();
+      this._bindListenBtn();
       this.nextQ();
     },
+
     updateUI() {
       const g = this.gs;
-      document.getElementById('quiz-score').textContent = g.score;
-      document.getElementById('quiz-lives').textContent = '💖'.repeat(g.lives);
-      document.getElementById('quiz-q').textContent = g.q + 1;
+      document.getElementById('quiz-score').textContent  = g.score;
+      document.getElementById('quiz-lives').textContent  = '💖'.repeat(g.lives);
+      document.getElementById('quiz-q').textContent      = g.q + 1;
       document.getElementById('quiz-progress').style.width = (g.q / g.total * 100) + '%';
     },
+
+    _bindListenBtn() {
+      const btn = document.getElementById('quiz-listen-btn');
+      if (btn) btn.onclick = () => {
+        if (Speech.isSupported()) Speech.sayNumber(this.correct, { rate: 0.8 });
+      };
+    },
+
     nextQ() {
       const g = this.gs;
       if (g.q >= g.total) { endGame(g, 'numbers'); return; }
-      this.correct = randInt(1, 20);
-      document.getElementById('quiz-number').textContent = this.correct;
 
-      // visual helpers (hearts)
-      const vis = document.getElementById('quiz-hearts-visual');
-      vis.innerHTML = '';
-      for (let i = 0; i < Math.min(this.correct, 20); i++) {
-        const h = document.createElement('span');
-        h.className = 'heart-item';
-        h.textContent = '🫀';
-        h.style.animationDelay = (i * 0.04) + 's';
-        vis.appendChild(h);
+      // 정답 숫자 (1~100에서 랜덤)
+      this.correct = randInt(1, 100);
+      const numEl = document.getElementById('quiz-number');
+      numEl.textContent = this.correct;
+      numEl.animate([
+        { transform: 'scale(0.6)', opacity: 0 },
+        { transform: 'scale(1.1)', opacity: 1 },
+        { transform: 'scale(1)',   opacity: 1 }
+      ], { duration: 300, easing: 'ease-out' });
+
+      // 음성으로 읽기 (자동)
+      if (Speech.isSupported()) Speech.sayNumber(this.correct, { rate: 0.85 });
+
+      // 오답 3개: 스페인어 단어가 중복되지 않아야 함
+      const correctWord = Speech.getWord(this.correct);
+      const usedWords   = new Set([correctWord]);
+      const wrongNums   = [];
+      let   attempts    = 0;
+      while (wrongNums.length < 3 && attempts < 300) {
+        attempts++;
+        const candidate = randInt(1, 100);
+        if (candidate === this.correct) continue;
+        const w = Speech.getWord(candidate);
+        if (usedWords.has(w)) continue;
+        usedWords.add(w);
+        wrongNums.push(candidate);
+      }
+      const options = shuffle4([this.correct, ...wrongNums]);
+
+
+      // 4지선다 버튼 렌더링
+      const grid = document.getElementById('quiz-word-grid');
+      grid.innerHTML = '';
+      options.forEach(n => {
+        const btn = document.createElement('button');
+        btn.className   = 'quiz-word-btn';
+        btn.textContent = Speech.getWord(n);   // 스페인어 단어 표시
+        btn.dataset.n   = n;
+        btn.onclick = () => this._answer(btn, n);
+        grid.appendChild(btn);
+      });
+    },
+
+    _answer(btn, chosen) {
+      // 모든 버튼 비활성화
+      document.querySelectorAll('.quiz-word-btn').forEach(b => b.onclick = null);
+
+      const ok = chosen === this.correct;
+      btn.classList.add(ok ? 'qw-correct' : 'qw-wrong');
+
+      if (!ok) {
+        // 정답 버튼 표시
+        document.querySelectorAll('.quiz-word-btn').forEach(b => {
+          if (Number(b.dataset.n) === this.correct) b.classList.add('qw-correct');
+        });
       }
 
-      const opts = wrongOptions(this.correct, 3, 1, 25);
-      makeAnswerGrid(document.getElementById('quiz-answer-grid'), opts, this.correct, (ok) => {
-        if (ok) { g.score++; }
-        else { g.lives = Math.max(0, g.lives - 1); }
-        if (g.lives === 0) { endGame(g, 'numbers'); return; }
-        g.q++;
-        this.updateUI();
-        this.nextQ();
-      });
+      // 음성: 정답 단어 읽기
+      if (Speech.isSupported()) Speech.sayNumber(this.correct, { rate: 0.85 });
+
+      if (ok) { Sounds.correct?.(); this.gs.score++; }
+      else    { Sounds.wrong?.(); this.gs.lives = Math.max(0, this.gs.lives - 1); }
+
+      if (this.gs.lives === 0) {
+        setTimeout(() => endGame(this.gs, 'numbers'), 900);
+        return;
+      }
+      this.gs.q++;
+      this.updateUI();
+      setTimeout(() => this.nextQ(), 1100);
     },
   };
 
+  /* Helper: Fisher-Yates shuffle for 4 items */
+  function shuffle4(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+
   /* ══════════════════════════════════════════════
-     MODE 4: LEER (음성 읽기)
+     LEER: 숫자 학습 카드 (숫자 + 손가락 + 음성)
   ══════════════════════════════════════════════ */
   const LEER = {
-    numbers: [],    // 현재 모드의 숫자 배열
-    idx: 0,         // 현재 인덱스
-    mode: '1-10',
+    numbers: [], idx: 0, mode: '1-10',
 
     init() {
-      // 음성 미지원 경고
-      const warn = document.getElementById('no-speech-warn');
-      if (warn) warn.style.display = Speech.isSupported() ? 'none' : 'block';
-
       this.setMode('1-10');
-      this._bindEvents();
     },
 
     setMode(mode) {
       this.mode = mode;
-      document.querySelectorAll('.leer-mode-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.lmode === mode);
-      });
-
-      if (mode === 'libre') {
-        // 무작위 10개
-        this.numbers = Array.from({ length: 10 }, () => Math.floor(Math.random() * 100) + 1);
-      } else {
-        const [, max] = mode.split('-').map(Number);
-        this.numbers = Array.from({ length: max }, (_, i) => i + 1);
-      }
+      const [min, max] = mode.split('-').map(Number);
+      this.numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
       this.idx = 0;
       this._renderGrid();
       this._show();
     },
 
     _show() {
-      const n = this.numbers[this.idx];
+      const n    = this.numbers[this.idx];
       const word = Speech.getWord(n);
 
       // 큰 숫자
       const numEl = document.getElementById('leer-number');
+      if (!numEl) return;
       numEl.textContent = n;
-      numEl.style.transform = 'scale(1)';
       numEl.animate([
         { transform: 'scale(0.7)', opacity: 0 },
         { transform: 'scale(1.05)', opacity: 1 },
-        { transform: 'scale(1)', opacity: 1 }
-      ], { duration: 300, easing: 'ease-out' });
+        { transform: 'scale(1)',    opacity: 1 }
+      ], { duration: 280, easing: 'ease-out' });
 
-      // 단어 (글자별 애니메이션)
+      // 스페인어 단어
       const wordEl = document.getElementById('leer-word');
-      wordEl.innerHTML = word.split('').map((ch, i) =>
+      if (wordEl) wordEl.innerHTML = word.split('').map((ch, i) =>
         `<span class="letter" style="animation-delay:${i * 0.05}s">${ch}</span>`
       ).join('');
 
+      // 손가락 이미지 합성
+      const visual   = document.getElementById('leer-visual');
+      const complete = Math.floor(n / 10);
+      const remain   = n % 10;
+      const total    = complete + (remain > 0 ? 1 : 0);
+      if (visual) {
+        visual.className = 'leer-visual-wrap' +
+          (total >= 3 ? ` count-${Math.min(total, 10)}` : '');
+        let html = '';
+        for (let i = 0; i < complete; i++)
+          html += `<img src="../assets/fingers/finger_10.png" class="vis-person"
+                        alt="10" style="animation-delay:${i*0.06}s">`;
+        if (remain > 0)
+          html += `<img src="../assets/fingers/finger_${remain}.png" class="vis-finger"
+                        alt="${remain}" style="animation-delay:${complete*0.06}s">`;
+        visual.innerHTML = html;
+      }
+
       // 카운터
-      document.getElementById('leer-counter').textContent =
-        `${this.idx + 1} / ${this.numbers.length}`;
+      const ctr = document.getElementById('leer-counter');
+      if (ctr) ctr.textContent = `${this.idx + 1} / ${this.numbers.length}`;
 
       // 그리드 하이라이트
       document.querySelectorAll('.leer-mini-num').forEach(el => {
-        el.style.borderColor = Number(el.dataset.n) === n ? 'var(--coral)' : 'transparent';
-        el.style.background  = Number(el.dataset.n) === n ? 'var(--coral-light)' : '#fff';
+        const active = Number(el.dataset.n) === n;
+        el.style.borderColor = active ? 'var(--coral)' : 'transparent';
+        el.style.background  = active ? 'var(--coral-light)' : '#fff';
       });
 
       // 자동 읽기
-      this._speak();
-    },
-
-    _speak() {
-      if (!Speech.isSupported()) return;
-      const n = this.numbers[this.idx];
-      const btn = document.getElementById('leer-speak-btn');
-      btn.classList.add('speaking');
-      btn.textContent = '🔊 Leyendo...';
-      const utt = Speech.sayNumber(n, { rate: 0.8, pitch: 1.15 });
-      if (utt) {
-        utt.onend = () => {
-          btn.classList.remove('speaking');
-          btn.textContent = '🔊 Escuchar';
-        };
-      } else {
-        setTimeout(() => {
-          btn.classList.remove('speaking');
-          btn.textContent = '🔊 Escuchar';
-        }, 1200);
-      }
+      if (Speech.isSupported()) Speech.sayNumber(n, { rate: 0.85, pitch: 1.1 });
     },
 
     _renderGrid() {
       const grid = document.getElementById('leer-grid');
+      if (!grid) return;
       grid.innerHTML = '';
       this.numbers.forEach(n => {
         const cell = document.createElement('div');
         cell.className = 'leer-mini-num';
         cell.dataset.n = n;
-        cell.innerHTML = `
-          <div class="mini-n">${n}</div>
-          <div class="mini-w">${Speech.getWord(n)}</div>
-        `;
+        cell.innerHTML = `<div class="mini-n">${n}</div><div class="mini-w">${Speech.getWord(n)}</div>`;
         cell.addEventListener('click', () => {
           this.idx = this.numbers.indexOf(n);
           this._show();
-          Sounds.click && Sounds.click();
         });
         grid.appendChild(cell);
       });
     },
 
     _bindEvents() {
-      // 숫자 클릭 → 읽기
-      document.getElementById('leer-number')?.addEventListener('click', () => this._speak());
-
-      // 읽기 버튼
-      document.getElementById('leer-speak-btn')?.addEventListener('click', () => this._speak());
-
-      // 이전 / 다음
-      document.getElementById('leer-prev')?.addEventListener('click', () => {
+      const speak = () => {
+        if (Speech.isSupported()) Speech.sayNumber(this.numbers[this.idx], { rate: 0.85 });
+      };
+      const prev = () => {
         this.idx = (this.idx - 1 + this.numbers.length) % this.numbers.length;
         this._show();
-        Sounds.click && Sounds.click();
-      });
-      document.getElementById('leer-next')?.addEventListener('click', () => {
+      };
+      const next = () => {
         this.idx = (this.idx + 1) % this.numbers.length;
         this._show();
-        Sounds.click && Sounds.click();
+      };
+
+      // onclick 직접 할당 = 중복 등록 불가, 항상 1개만 유지
+      const numEl  = document.getElementById('leer-number');
+      const speakEl= document.getElementById('leer-speak-btn');
+      const prevEl = document.getElementById('leer-prev');
+      const nextEl = document.getElementById('leer-next');
+
+      if (numEl)   numEl.onclick   = speak;
+      if (speakEl) speakEl.onclick = speak;
+      if (prevEl)  prevEl.onclick  = prev;
+      if (nextEl)  nextEl.onclick  = next;
+    },
+  };
+
+  /* ══════════════════════════════════════════════
+     MODE 4: MATCH (숫자↔스페인어 메모리 게임)
+  ══════════════════════════════════════════════ */
+  const MATCH = {
+    mode:    '1-10',
+    pairs:   0,       // 맞춘 쌍 수
+    moves:   0,       // 시도 횟수
+    flipped: [],      // 현재 뒤집힌 카드 el 배열 (최대 2)
+    locked:  false,   // 확인 중 잠금
+
+    /* 모드 범위의 숫자 배열 */
+    _nums() {
+      const [min, max] = this.mode.split('-').map(Number);
+      return Array.from({ length: max - min + 1 }, (_, i) => min + i);
+    },
+
+    init() {
+      this.setMode('1-10');
+      this._bindEvents();
+    },
+
+    setMode(mode) {
+      this.mode = mode;
+      document.querySelectorAll('.leer-mode-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.lmode === mode));
+      this._startGame();
+    },
+
+    _startGame() {
+      this.pairs   = 0;
+      this.moves   = 0;
+      this.flipped = [];
+      this.locked  = false;
+
+      // 완성 배너 숨김
+      const done = document.getElementById('match-complete');
+      if (done) done.style.display = 'none';
+
+      this._updateStats();
+      this._buildGrid();
+    },
+
+    _updateStats() {
+      const nums = this._nums();
+      document.getElementById('match-moves-display').textContent =
+        `🃏 ${this.moves} intentos`;
+      document.getElementById('match-pairs-display').textContent =
+        `⭐ ${this.pairs} / ${nums.length} pares`;
+    },
+
+    _buildGrid() {
+      const nums = this._nums();
+      // 카드 데이터: 숫자 카드 + 단어 카드 각 10장
+      const cards = [];
+      nums.forEach(n => {
+        cards.push({ pair: n, type: 'number', display: String(n) });
+        cards.push({ pair: n, type: 'word',   display: Speech.getWord(n) });
       });
 
-      // 키보드 지원
-      document.addEventListener('keydown', e => {
-        if (document.getElementById('tab-leer').style.display === 'none') return;
-        if (e.key === 'ArrowRight') document.getElementById('leer-next').click();
-        if (e.key === 'ArrowLeft')  document.getElementById('leer-prev').click();
-        if (e.key === ' ') { e.preventDefault(); this._speak(); }
-      });
+      // Fisher-Yates 셔플
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+      }
 
-      // 모드 버튼
+      // 그리드 렌더링
+      const grid = document.getElementById('match-grid');
+      grid.innerHTML = '';
+      cards.forEach((c, idx) => {
+        const el = document.createElement('div');
+        el.className = 'mc';
+        el.dataset.pair = c.pair;
+        el.dataset.type = c.type;
+        el.innerHTML = `
+          <div class="mc-inner">
+            <div class="mc-front">?</div>
+            <div class="mc-back type-${c.type}">${c.display}</div>
+          </div>`;
+        el.style.animationDelay = (idx * 0.03) + 's';
+        el.addEventListener('click', () => this._onCardClick(el));
+        grid.appendChild(el);
+      });
+    },
+
+    _onCardClick(el) {
+      // 잠금 중 / 이미 매치됨 / 이미 뒤집힌 카드 클릭 무시
+      if (this.locked) return;
+      if (el.classList.contains('matched')) return;
+      if (this.flipped.includes(el)) return;
+
+      // 카드 뒤집기
+      el.classList.add('flipped');
+      this.flipped.push(el);
+      Sounds?.click?.();
+
+      // 🔊 카드 뒤집을 때 숫자 음성 재생
+      if (Speech.isSupported()) {
+        Speech.sayNumber(Number(el.dataset.pair), { rate: 0.9, pitch: 1.1 });
+      }
+
+      if (this.flipped.length === 2) {
+        this.moves++;
+        this._updateStats();
+        this._checkMatch();
+      }
+    },
+
+    _checkMatch() {
+      const [c1, c2] = this.flipped;
+      const samePair   = c1.dataset.pair === c2.dataset.pair;
+      const diffType   = c1.dataset.type !== c2.dataset.type;
+
+      if (samePair && diffType) {
+        // ✅ 매치 성공
+        c1.classList.add('matched');
+        c2.classList.add('matched');
+        this.pairs++;
+        this._updateStats();
+        this.flipped = [];
+
+        // 음성 읽기
+        if (Speech.isSupported()) {
+          Speech.sayNumber(Number(c1.dataset.pair), { rate: 0.9 });
+        }
+
+        // 게임 완료 체크
+        if (this.pairs === this._nums().length) {
+          setTimeout(() => this._showComplete(), 500);
+        }
+      } else {
+        // ❌ 불일치 - 흔들기 후 뒤집어 돌아감
+        this.locked = true;
+        c1.classList.add('wrong');
+        c2.classList.add('wrong');
+        setTimeout(() => {
+          c1.classList.remove('flipped', 'wrong');
+          c2.classList.remove('flipped', 'wrong');
+          this.flipped = [];
+          this.locked  = false;
+        }, 900);
+      }
+    },
+
+    _showComplete() {
+      const el = document.getElementById('match-complete');
+      document.getElementById('match-complete-moves').textContent = this.moves;
+      el.style.display = 'block';
+    },
+
+    _bindEvents() {
+      // 범위 버튼 → LEER 카드 + MATCH 게임 동시 업데이트
       document.querySelectorAll('.leer-mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          Sounds.click && Sounds.click();
-          this.setMode(btn.dataset.lmode);
+          Sounds?.click?.();
+          const m = btn.dataset.lmode;
+          LEER.setMode(m);
+          this.setMode(m);
         });
+      });
+
+      // LEER 버튼 이벤트
+      LEER._bindEvents();
+
+      // 다시 시작
+      document.getElementById('match-restart-btn')?.addEventListener('click', () => {
+        Sounds?.click?.();
+        this._startGame();
+      });
+
+      // 다음 범위
+      document.getElementById('match-next-range-btn')?.addEventListener('click', () => {
+        const btns   = [...document.querySelectorAll('.leer-mode-btn')];
+        const curIdx = btns.findIndex(b => b.dataset.lmode === this.mode);
+        const next   = btns[(curIdx + 1) % btns.length];
+        Sounds?.click?.();
+        LEER.setMode(next.dataset.lmode);
+        this.setMode(next.dataset.lmode);
+        next.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       });
     },
   };
 
+  /* combined leer tab entry */
+  const LEER_TAB = {
+    _ready: false,
+    init() {
+      LEER.init();
+      MATCH.init();
+      if (!this._ready) {
+        MATCH._bindEvents();
+        this._ready = true;
+      }
+    },
+  };
+
   /* ─── TAB SWITCHING ─────────────────────────────────────── */
-  const TABS = { count: COUNT, compare: CMP, leer: LEER, quiz: QUIZ };
-  let activeTab = 'count';
+  const TABS = { count: COUNT, compare: CMP, leer: LEER_TAB, quiz: QUIZ };
+  let activeTab = 'leer';
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -404,12 +638,12 @@
       btn.classList.add('active');
 
       document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-      document.getElementById('tab-' + tab).style.display = '';
+      document.querySelector('[data-tab-panel="' + tab + '"]').style.display = '';
 
       TABS[tab].init();
     });
   });
 
   // Start first tab
-  COUNT.init();
+  LEER_TAB.init();
 })();

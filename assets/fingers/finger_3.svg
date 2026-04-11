@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="300" height="240" viewBox="0 0 300 240">
+  <rect width="300" height="240" fill="#FFF5F7" rx="20"/>
+  <circle cx="150" cy="95" r="38.4"
+           fill="#FFE8E8" stroke="#FFAAAA" stroke-width="2"/><line x1="141.4"
+               y1="75.7"
+               x2="133.6" y2="58.2"
+               stroke="#FF6B6B" stroke-width="13.2"
+               stroke-linecap="round"/><circle cx="133.6" cy="58.2" r="8.4"
+             fill="#FFFFFF" stroke="#FF6B6B" stroke-width="2"/><line x1="150"
+               y1="73.9"
+               x2="150" y2="54.7"
+               stroke="#FF6B6B" stroke-width="13.2"
+               stroke-linecap="round"/><circle cx="150" cy="54.7" r="8.4"
+             fill="#FFFFFF" stroke="#FF6B6B" stroke-width="2"/><line x1="158.6"
+               y1="75.7"
+               x2="166.4" y2="58.2"
+               stroke="#FF6B6B" stroke-width="13.2"
+               stroke-linecap="round"/><circle cx="166.4" cy="58.2" r="8.4"
+             fill="#FFFFFF" stroke="#FF6B6B" stroke-width="2"/>
+    <rect x="129" y="10" width="42" height="36" rx="12"
+          fill="#FF6B6B"/>
+    <text x="150" y="36" text-anchor="middle"
+          font-family="Arial Rounded MT Bold, Arial, sans-serif"
+          font-size="20" font-weight="900" fill="white">3</text>
+</svg>

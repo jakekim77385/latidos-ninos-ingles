@@ -61,13 +61,24 @@ const Speech = (function () {
 
   function say(text, { rate = 0.85, pitch = 1.1 } = {}) {
     if (!isSupported()) return;
-    window.speechSynthesis.cancel(); // 기존 읽기 중단
-    const utt = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.cancel();
+    // 끝 클리핑 방지: 뒤에 짧은 쉼 추가 (Web Speech API 공통 버그 우회)
+    const utt = new SpeechSynthesisUtterance(text + ',');
     utt.lang  = 'es-419';
     utt.rate  = rate;
     utt.pitch = pitch;
     if (_spanishVoice) utt.voice = _spanishVoice;
     window.speechSynthesis.speak(utt);
+    // Chrome: 15초 이상 silence 시 자동 pause 버그 방지
+    const keepAlive = setInterval(() => {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      } else {
+        clearInterval(keepAlive);
+      }
+    }, 10000);
+    utt.onend = () => clearInterval(keepAlive);
     return utt;
   }
 

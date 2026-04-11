@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="300" height="240" viewBox="0 0 300 240">
+  <rect width="300" height="240" fill="#FFF5F7" rx="20"/>
+  <circle cx="150" cy="95" r="38.4"
+           fill="#FFE8E8" stroke="#FFAAAA" stroke-width="2"/><line x1="139.7"
+               y1="76.6"
+               x2="130.3" y2="59.8"
+               stroke="#FF6B6B" stroke-width="13.2"
+               stroke-linecap="round"/><circle cx="130.3" cy="59.8" r="8.4"
+             fill="#FFFFFF" stroke="#FF6B6B" stroke-width="2"/><line x1="146.4"
+               y1="74.2"
+               x2="143.2" y2="55.3"
+               stroke="#FF6B6B" stroke-width="13.2"
+               stroke-linecap="round"/><circle cx="143.2" cy="55.3" r="8.4"
+             fill="#FFFFFF" stroke="#FF6B6B" stroke-width="2"/><line x1="153.6"
+               y1="74.2"
+               x2="156.8" y2="55.3"
+               stroke="#FF6B6B" stroke-width="13.2"
+               stroke-linecap="round"/><circle cx="156.8" cy="55.3" r="8.4"
+             fill="#FFFFFF" stroke="#FF6B6B" stroke-width="2"/><line x1="160.3"
+               y1="76.6"
+               x2="169.7" y2="59.8"
+               stroke="#FF6B6B" stroke-width="13.2"
+               stroke-linecap="round"/><circle cx="169.7" cy="59.8" r="8.4"
+             fill="#FFFFFF" stroke="#FF6B6B" stroke-width="2"/>
+    <rect x="129" y="10" width="42" height="36" rx="12"
+          fill="#FF6B6B"/>
+    <text x="150" y="36" text-anchor="middle"
+          font-family="Arial Rounded MT Bold, Arial, sans-serif"
+          font-size="20" font-weight="900" fill="white">4</text>
+</svg>
