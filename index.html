@@ -310,8 +310,7 @@
     function showWelcome() {
       show('welcome-screen');
       nameInput.value = '';
-      // 기본 캐릭터 미리 선택 (모바일 탭 인식 문제 방지)
-      selectedChar = 'bunny';
+      selectedChar = 'bunny'; // 기본값
       document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
       const defaultCard = document.querySelector('.character-card[data-char="bunny"]');
       if (defaultCard) defaultCard.classList.add('selected');
@@ -379,15 +378,16 @@
     nameInput?.addEventListener('input', checkReady);
 
     function checkReady() {
-      const ready = selectedChar && nameInput.value.trim().length > 0;
+      const ready = nameInput.value.trim().length > 0; // 이름만 있으면 활성화
       startBtn.disabled = !ready;
       startBtn.style.opacity = ready ? '1' : '0.5';
     }
 
     startBtn?.addEventListener('click', () => {
-      if (!selectedChar || !nameInput.value.trim()) return;
+      if (!nameInput.value.trim()) return;
+      const char = selectedChar || 'bunny'; // 선택 없으면 bunny 사용
       try { Sounds.pop && Sounds.pop(); } catch(e) {}
-      App.addProfile(nameInput.value.trim(), selectedChar);
+      App.addProfile(nameInput.value.trim(), char);
       try { App.launchConfetti(40); } catch(e) {}
       App.showToast(`¡Hola, ${nameInput.value.trim()}! 🎉`);
       setTimeout(showDashboard, 300);
