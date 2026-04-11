@@ -309,9 +309,12 @@
     /* ── Welcome (new profile) ────── */
     function showWelcome() {
       show('welcome-screen');
-      selectedChar = null;
       nameInput.value = '';
+      // 기본 캐릭터 미리 선택 (모바일 탭 인식 문제 방지)
+      selectedChar = 'bunny';
       document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
+      const defaultCard = document.querySelector('.character-card[data-char="bunny"]');
+      if (defaultCard) defaultCard.classList.add('selected');
       checkReady();
     }
 
