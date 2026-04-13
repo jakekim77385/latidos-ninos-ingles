@@ -349,7 +349,7 @@
       // 스페인어 단어
       const wordEl = document.getElementById('leer-word');
       if (wordEl) wordEl.innerHTML = word.split('').map((ch, i) =>
-        `<span class="letter" style="animation-delay:${i * 0.05}s">${ch}</span>`
+        `<span class="letter${ch === ' ' ? ' space' : ''}" style="animation-delay:${i * 0.05}s">${ch === ' ' ? '&nbsp;' : ch}</span>`
       ).join('');
 
       // 손가락 이미지 합성
