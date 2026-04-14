@@ -144,14 +144,13 @@ const Speech = (function () {
   }
 
   /** 알파벳 한 글자 → 영어 발음명으로 읽기
-   *  H → "aitch", W → "double you" 등 TTS가 정확하게 발음하도록 */
+   *  TTS가 이상하게 읽는 글자만 명시 override, 나머지는 그대로 TTS에 전달 */
   const LETTER_PHONETICS = {
-    A:'ay',    B:'bee',       C:'see',     D:'dee',    E:'ee',
-    F:'eff',   G:'jee',       H:'aitch',   I:'eye',    J:'jay',
-    K:'kay',   L:'el',        M:'em',      N:'en',     O:'oh',
-    P:'pee',   Q:'cue',       R:'ar',      S:'ess',    T:'tee',
-    U:'you',   V:'vee',       W:'double you', X:'ex',  Y:'why',
-    Z:'zee',
+    // TTS가 단독 글자를 잘 못 읽는 경우만 재정의
+    H: 'aitch',
+    W: 'double you',
+    Y: 'why',
+    Z: 'zee',
   };
 
   function sayLetter(letter, opts = {}) {
