@@ -63,6 +63,22 @@ const Speech = (function () {
     window.speechSynthesis.onvoiceschanged = _loadVoices;
   }
 
+  // ── Chrome 자동재생 잠금 해제 ────────────────────────────────
+  // Chrome/Edge 는 첫 사용자 제스처 없이 speak() 호출을 차단함.
+  // 첫 클릭/터치 시 빈 utterance 로 잠금 해제 → 이후 자동재생 모두 정상.
+  let _unlocked = false;
+  function _unlock() {
+    if (_unlocked || !window.speechSynthesis) return;
+    _unlocked = true;
+    const silent = new SpeechSynthesisUtterance('');
+    silent.volume = 0;
+    window.speechSynthesis.speak(silent);
+  }
+  document.addEventListener('click',      _unlock, { once: true, capture: true });
+  document.addEventListener('touchstart', _unlock, { once: true, capture: true });
+  document.addEventListener('keydown',    _unlock, { once: true, capture: true });
+  // ─────────────────────────────────────────────────────────────
+
   function isSupported() {
     return 'speechSynthesis' in window;
   }
