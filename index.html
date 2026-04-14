@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Latidos Niños — Aprende matemáticas con juegos divertidos. Plataforma educativa para niños en Panamá." />
-  <title>Latidos Niños — ¡Aprende Matemáticas!</title>
+  <meta name="description" content="Latidos Niños Inglés — Aprende inglés con juegos divertidos. Palabras, frases, y el alfabeto para niños en Panamá." />
+  <title>Latidos Niños — ¡Aprende Inglés!</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
     .hero-section {
@@ -38,30 +38,30 @@
           <img src="assets/Heartitude_transparent.png" alt="Heartitude"
                style="width:min(160px,38vw);" />
         </div>
-        <h1 class="hero-title">¡Aprende con <span style="color:var(--coral);">Latidos</span> Niños!</h1>
-        <p class="hero-tagline">El lugar donde las matemáticas son una aventura 🚀</p>
+        <h1 class="hero-title">¡Aprende <span style="color:var(--coral);">Inglés</span> con Latidos!</h1>
+        <p class="hero-tagline">El lugar donde aprender inglés es una aventura 🚀</p>
       </div>
 
       <h2 class="section-title">📚 Elige tu aventura</h2>
       <div class="module-grid">
-        <a href="pages/numbers.html" class="module-card coral" id="card-numbers">
-          <span class="module-icon">🔢</span>
-          <div class="module-title">Números</div>
-          <div class="module-subtitle">Contar, comparar y reconocer</div>
+        <a href="pages/words.html" class="module-card coral" id="card-words">
+          <span class="module-icon">📖</span>
+          <div class="module-title">Words</div>
+          <div class="module-subtitle">Colores · Animales · Comida · Más</div>
         </a>
-        <a href="pages/operations.html" class="module-card yellow" id="card-ops">
-          <span class="module-icon">🎮</span>
-          <div class="module-title">Operaciones</div>
-          <div class="module-subtitle">Suma · Resta · Mult · Div</div>
+        <a href="pages/phrases.html" class="module-card yellow" id="card-phrases">
+          <span class="module-icon">💬</span>
+          <div class="module-title">Phrases</div>
+          <div class="module-subtitle">Saludos · Sentimientos · Clases</div>
         </a>
-        <a href="pages/tables.html" class="module-card green" id="card-tables">
-          <span class="module-icon">✖️</span>
-          <div class="module-title">Tablas</div>
-          <div class="module-subtitle">Memoriza la tabla · Bingo</div>
+        <a href="pages/alphabet.html" class="module-card green" id="card-alphabet">
+          <span class="module-icon">🔤</span>
+          <div class="module-title">Alphabet</div>
+          <div class="module-subtitle">A-Z · Memoria · Quiz</div>
         </a>
         <a href="pages/rewards.html" class="module-card purple" id="card-rewards">
           <span class="module-icon">🏆</span>
-          <div class="module-title">Premios</div>
+          <div class="module-title">Rewards</div>
           <div class="module-subtitle">Medallas y logros</div>
         </a>
       </div>
@@ -73,7 +73,6 @@
   <script src="js/sounds.js"></script>
   <script>
     App.initPage('home');
-    // 프로필 없으면 자동 생성 (이름 입력 불필요)
     if (App.getProfiles().length === 0) {
       App.addProfile('Jugador', 'bunny');
     }

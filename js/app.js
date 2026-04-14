@@ -17,8 +17,7 @@ const App = (function () {
     hearts: 0,
     level: 1,
     stars: {
-      numbers: 0, addition: 0, subtraction: 0,
-      multiplication: 0, division: 0, tables: 0,
+      words: 0, phrases: 0, alphabet: 0, rewards: 0,
     },
     badges: [],
     soundEnabled: true,
@@ -203,14 +202,14 @@ const App = (function () {
   function renderNav(active) {
     const b = _base();
     const pages = [
-      { id:'home',       icon:'🏠', label:'Inicio',  href: b+'index.html' },
-      { id:'numbers',    icon:'🔢', label:'Números',  href: b+'pages/numbers.html' },
-      { id:'operations', icon:'➕', label:'Juegos',   href: b+'pages/operations.html' },
-      { id:'tables',     icon:'✖️', label:'Tablas',   href: b+'pages/tables.html' },
-      { id:'rewards',    icon:'🏆', label:'Premios',  href: b+'pages/rewards.html' },
+      { id:'home',     icon:'🏠', label:'Home',     href: b+'index.html' },
+      { id:'words',    icon:'📖', label:'Words',    href: b+'pages/words.html' },
+      { id:'phrases',  icon:'💬', label:'Phrases',  href: b+'pages/phrases.html' },
+      { id:'alphabet', icon:'🔤', label:'Alphabet', href: b+'pages/alphabet.html' },
+      { id:'rewards',  icon:'🏆', label:'Rewards',  href: b+'pages/rewards.html' },
     ];
     return `
-      <nav class="navbar" role="navigation" aria-label="Navegación principal">
+      <nav class="navbar" role="navigation" aria-label="Main navigation">
         <a href="${b}index.html" class="navbar-logo" id="nav-logo">
           <img src="${b}assets/LATIDOS.png" alt="Fundación Latidos" class="logo-img" />
         </a>
@@ -220,7 +219,7 @@ const App = (function () {
               <span class="nav-icon">${p.icon}</span><span>${p.label}</span>
             </a>`).join('')}
         </div>
-        <div class="navbar-points" id="nav-points-wrap" aria-label="Corazones">
+        <div class="navbar-points" id="nav-points-wrap" aria-label="Hearts">
           💖 <span id="nav-hearts">${state.hearts}</span>
         </div>
       </nav>`;
