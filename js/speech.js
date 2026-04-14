@@ -143,9 +143,20 @@ const Speech = (function () {
     return _speak(utt);
   }
 
-  /** 알파벳 한 글자 읽기 */
+  /** 알파벳 한 글자 → 영어 발음명으로 읽기
+   *  H → "aitch", W → "double you" 등 TTS가 정확하게 발음하도록 */
+  const LETTER_PHONETICS = {
+    A:'ay',    B:'bee',       C:'see',     D:'dee',    E:'ee',
+    F:'eff',   G:'jee',       H:'aitch',   I:'eye',    J:'jay',
+    K:'kay',   L:'el',        M:'em',      N:'en',     O:'oh',
+    P:'pee',   Q:'cue',       R:'ar',      S:'ess',    T:'tee',
+    U:'you',   V:'vee',       W:'double you', X:'ex',  Y:'why',
+    Z:'zee',
+  };
+
   function sayLetter(letter, opts = {}) {
-    return sayEnglish(letter, { rate: 0.7, pitch: 1.1, ...opts });
+    const name = LETTER_PHONETICS[letter.toUpperCase()] || letter;
+    return sayEnglish(name, { rate: 0.72, pitch: 1.05, ...opts });
   }
 
   function getWord(n)            { return numberToSpanish(n); }
