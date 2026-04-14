@@ -63,20 +63,25 @@ const Speech = (function () {
     window.speechSynthesis.onvoiceschanged = _loadVoices;
   }
 
-  // ── Chrome 자동재생 잠금 해제 ────────────────────────────────
-  // Chrome/Edge 는 첫 사용자 제스처 없이 speak() 호출을 차단함.
-  // 첫 클릭/터치 시 빈 utterance 로 잠금 해제 → 이후 자동재생 모두 정상.
-  let _unlocked = false;
-  function _unlock() {
-    if (_unlocked || !window.speechSynthesis) return;
-    _unlocked = true;
-    const silent = new SpeechSynthesisUtterance('');
-    silent.volume = 0;
-    window.speechSynthesis.speak(silent);
+  // ── 사용자 제스처 감지 ─────────────────────────────────────────
+  // Chrome은 페이지 로드 시 음성을 차단함.
+  // 이 플래그가 false이면 모든 say*() 가 조용히 무시됨.
+  // 첫 클릭/터치 후 즉시 모든 소리 정상 작동 (자동재생 포함).
+  let _userGestured = false;
+
+  function _onFirstGesture() {
+    if (_userGestured) return;
+    _userGestured = true;
+    if (window.speechSynthesis) {
+      const silent = new SpeechSynthesisUtterance('');
+      silent.volume = 0;
+      window.speechSynthesis.speak(silent);
+    }
   }
-  document.addEventListener('click',      _unlock, { once: true, capture: true });
-  document.addEventListener('touchstart', _unlock, { once: true, capture: true });
-  document.addEventListener('keydown',    _unlock, { once: true, capture: true });
+
+  document.addEventListener('click',      _onFirstGesture, { capture: true });
+  document.addEventListener('touchstart', _onFirstGesture, { capture: true });
+  document.addEventListener('keydown',    _onFirstGesture, { capture: true });
   // ─────────────────────────────────────────────────────────────
 
   function isSupported() {
@@ -84,7 +89,7 @@ const Speech = (function () {
   }
 
   function say(text, { rate = 0.8, pitch = 1.1 } = {}) {
-    if (!isSupported()) return;
+    if (!isSupported() || !_userGestured) return;
     window.speechSynthesis.cancel();
     // 끝 클리핑 방지: 뒤에 긴 침묵 패딩 추가
     const utt = new SpeechSynthesisUtterance(text + ' . . .');
@@ -113,7 +118,7 @@ const Speech = (function () {
 
   // ── 영어 TTS ──────────────────────────────────────────────
   function sayEnglish(text, { rate = 0.85, pitch = 1.0 } = {}) {
-    if (!isSupported()) return;
+    if (!isSupported() || !_userGestured) return;
     window.speechSynthesis.cancel();
     // 끝 클리핑 방지: 뒤에 긴 침묵 패딩 추가 (스페인어 say()와 동일하게)
     const utt = new SpeechSynthesisUtterance(text + ' . . . . .');
