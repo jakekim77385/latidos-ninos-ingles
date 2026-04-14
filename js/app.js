@@ -203,9 +203,9 @@ const App = (function () {
     const b = _base();
     const pages = [
       { id:'home',     icon:'🏠', label:'Home',     href: b+'index.html' },
+      { id:'alphabet', icon:'🔤', label:'Alphabet', href: b+'pages/alphabet.html' },
       { id:'words',    icon:'📖', label:'Words',    href: b+'pages/words.html' },
       { id:'phrases',  icon:'💬', label:'Phrases',  href: b+'pages/phrases.html' },
-      { id:'alphabet', icon:'🔤', label:'Alphabet', href: b+'pages/alphabet.html' },
       { id:'rewards',  icon:'🏆', label:'Rewards',  href: b+'pages/rewards.html' },
     ];
     return `
