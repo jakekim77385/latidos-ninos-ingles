@@ -284,8 +284,9 @@
 
       this.correct = this.pool[g.q % this.pool.length];
 
-      const emojiEl = document.getElementById('phq-emoji');
-      const snipEl  = document.getElementById('phq-snippet');
+      const emojiEl  = document.getElementById('phq-emoji');
+      const snipEl   = document.getElementById('phq-snippet');
+      const listenEl = document.getElementById('phq-listen');
 
       if (emojiEl) {
         emojiEl.textContent = this.correct.emoji;
@@ -294,10 +295,18 @@
           { duration:300, easing:'ease-out' }
         );
       }
-      // 스페인어 힌트 표시
+      // 스페인어 힌트
       if (snipEl) snipEl.textContent = this.correct.es;
 
-      // 음성: 문장 읽어줌
+      // Listen again 버튼 — 현재 문장 재생
+      if (listenEl) {
+        const phrase = this.correct.en;
+        listenEl.onclick = () => {
+          if (Speech.isSupported()) Speech.sayEnglish(phrase, { rate: 0.78 });
+        };
+      }
+
+      // 자동 음성
       if (Speech.isSupported()) Speech.sayEnglish(this.correct.en, { rate: 0.78 });
 
       // 보기 4개
@@ -329,16 +338,32 @@
         });
       }
 
-      if (Speech.isSupported()) Speech.sayEnglish(this.correct.en, { rate: 0.78 });
-
       const g = this.gs;
       if (ok) g.score++;
       else    g.lives = Math.max(0, g.lives - 1);
 
-      if (g.lives === 0) { setTimeout(() => this._endGame(), 900); return; }
-      g.q++;
-      this._updateUI();
-      setTimeout(() => this._nextQ(), 1200);
+      // 음성이 끝난 뒤 400ms 후 다음 문제로
+      let advanced = false;
+      const advance = () => {
+        if (advanced) return;
+        advanced = true;
+        if (g.lives === 0) { this._endGame(); return; }
+        g.q++;
+        this._updateUI();
+        this._nextQ();
+      };
+
+      if (Speech.isSupported()) {
+        const utt = Speech.sayEnglish(this.correct.en, { rate: 0.78 });
+        if (utt) {
+          utt.addEventListener('end', () => setTimeout(advance, 400));
+          setTimeout(advance, 7000); // fallback
+        } else {
+          setTimeout(advance, 1500);
+        }
+      } else {
+        setTimeout(advance, 1500);
+      }
     },
 
     _endGame() {

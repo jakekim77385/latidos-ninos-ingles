@@ -38,6 +38,7 @@ const Speech = (function () {
 
   let _voices = [];
   let _spanishVoice = null;
+  let _englishVoice = null;
 
   function _loadVoices() {
     _voices = window.speechSynthesis.getVoices();
@@ -47,6 +48,13 @@ const Speech = (function () {
       _voices.find(v => v.lang === 'es-MX') ||
       _voices.find(v => v.lang.startsWith('es-')) ||
       _voices.find(v => v.lang.startsWith('es')) ||
+      null;
+    // 영어 음성 우선순위: en-US > en-GB > en
+    _englishVoice =
+      _voices.find(v => v.lang === 'en-US') ||
+      _voices.find(v => v.lang === 'en-GB') ||
+      _voices.find(v => v.lang.startsWith('en-')) ||
+      _voices.find(v => v.lang.startsWith('en')) ||
       null;
   }
 
@@ -87,6 +95,34 @@ const Speech = (function () {
     return say(word, opts);
   }
 
+  // ── 영어 TTS ──────────────────────────────────────────────
+  function sayEnglish(text, { rate = 0.85, pitch = 1.0 } = {}) {
+    if (!isSupported()) return;
+    window.speechSynthesis.cancel();
+    // 끝 클리핑 방지: 뒤에 긴 침묵 패딩 추가 (스페인어 say()와 동일하게)
+    const utt = new SpeechSynthesisUtterance(text + ' . . . . .');
+    utt.lang  = 'en-US';
+    utt.rate  = rate;
+    utt.pitch = pitch;
+    if (_englishVoice) utt.voice = _englishVoice;
+    const keepAlive = setInterval(() => {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      } else {
+        clearInterval(keepAlive);
+      }
+    }, 10000);
+    utt.addEventListener('end', () => clearInterval(keepAlive));
+    window.speechSynthesis.speak(utt);
+    return utt;
+  }
+
+  // 알파벳 한 글자를 영어로 읽어주는 함수
+  function sayLetter(letter, opts = {}) {
+    return sayEnglish(letter, { rate: 0.7, pitch: 1.1, ...opts });
+  }
+
   function getWord(n) {
     return numberToSpanish(n);
   }
@@ -95,5 +131,5 @@ const Speech = (function () {
     return _voices.filter(v => v.lang.startsWith('es'));
   }
 
-  return { isSupported, say, sayNumber, getWord, getAvailableVoices, NUMBERS_ES };
+  return { isSupported, say, sayNumber, sayEnglish, sayLetter, getWord, getAvailableVoices, NUMBERS_ES };
 })();

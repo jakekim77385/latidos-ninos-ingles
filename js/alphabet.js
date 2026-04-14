@@ -137,25 +137,10 @@
         el.style.background   = active ? 'var(--coral-light)' : '#fff';
       });
 
-      // 자동 음성
-      if (Speech.isSupported()) Speech.sayEnglish(item.phrase, { rate: 0.78 });
-    },
-
-    _renderMiniGrid() {
-      const grid = document.getElementById('learn-mini-grid');
-      if (!grid) return;
-      grid.innerHTML = '';
-      this.items().forEach((item, i) => {
-        const el = document.createElement('div');
-        el.className = 'learn-mini';
-        el.dataset.i = i;
-        el.innerHTML = `<div style="font-size:1.5rem;font-weight:900;color:var(--coral);">${item.L}</div>
-                        <div style="font-size:1.6rem;">${item.emoji}</div>
-                        <div style="font-size:0.65rem;color:var(--text-mid);font-weight:700;">${item.word}</div>`;
-        el.style.cssText = 'background:#fff;border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;border:2.5px solid transparent;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.07);';
-        el.onclick = () => { this.idx = i; this._show(); };
-        grid.appendChild(el);
-      });
+      // 자동 음성: 다음/이전 누르면 알파벳 이름만 자동 재생
+      if (Speech.isSupported()) {
+        Speech.sayLetter(item.L, { rate: 0.7 });
+      }
     },
 
     _bindEvents() {
@@ -167,22 +152,32 @@
         this.idx = (this.idx + 1) % this.items().length;
         this._show();
       };
-      const speak = () => {
+      // 대문자 / Letter 버튼 → 알파벳 이름
+      const speakLetter = () => {
         const item = this.items()[this.idx];
-        if (Speech.isSupported()) Speech.sayEnglish(item.phrase, { rate: 0.75 });
+        if (Speech.isSupported()) Speech.sayLetter(item.L, { rate: 0.7 });
+      };
+      // 이모지 / Word 버튼 → 단어
+      const speakWord = () => {
+        const item = this.items()[this.idx];
+        if (Speech.isSupported()) Speech.sayEnglish(item.word, { rate: 0.78 });
       };
 
-      const prevEl  = document.getElementById('learn-prev');
-      const nextEl  = document.getElementById('learn-next');
-      const speakEl = document.getElementById('learn-speak');
-      const bigEl   = document.getElementById('learn-big');
+      const prevEl        = document.getElementById('learn-prev');
+      const nextEl        = document.getElementById('learn-next');
+      const speakLetterEl = document.getElementById('learn-speak-letter');
+      const speakWordEl   = document.getElementById('learn-speak-word');
+      const bigEl         = document.getElementById('learn-big');
+      const emojiEl       = document.getElementById('learn-emoji');
 
-      if (prevEl)  prevEl.onclick  = prev;
-      if (nextEl)  nextEl.onclick  = next;
-      if (speakEl) speakEl.onclick = speak;
-      if (bigEl)   bigEl.onclick   = speak;
+      if (prevEl)        prevEl.onclick        = prev;
+      if (nextEl)        nextEl.onclick        = next;
+      if (speakLetterEl) speakLetterEl.onclick = speakLetter;
+      if (speakWordEl)   speakWordEl.onclick   = speakWord;
+      if (bigEl)         bigEl.onclick         = speakLetter;
+      if (emojiEl)       emojiEl.onclick       = speakWord;
 
-      this._renderMiniGrid();
+      this._renderMiniGrid = () => {}; // removed
     },
   };
 
@@ -432,19 +427,32 @@
         });
       }
 
-      if (Speech.isSupported()) Speech.sayEnglish(this.correct.phrase, { rate: 0.78 });
-
       const g = this.gs;
       if (ok) { g.score++; }
       else    { g.lives = Math.max(0, g.lives - 1); }
 
-      if (g.lives === 0) {
-        setTimeout(() => this._endGame(), 900);
-        return;
+      // 음성이 완전히 끝난 뒤 400ms 후 다음으로 — 절대 중간에 안 끊김
+      let advanced = false;
+      const advance = () => {
+        if (advanced) return;
+        advanced = true;
+        if (g.lives === 0) { this._endGame(); return; }
+        g.q++;
+        this._updateUI();
+        this._nextQ();
+      };
+
+      if (Speech.isSupported()) {
+        const utt = Speech.sayEnglish(this.correct.phrase, { rate: 0.78 });
+        if (utt) {
+          utt.addEventListener('end', () => setTimeout(advance, 400));
+          setTimeout(advance, 6000); // fallback: 6초 안에 안 끝나면 강제 진행
+        } else {
+          setTimeout(advance, 1500);
+        }
+      } else {
+        setTimeout(advance, 1500);
       }
-      g.q++;
-      this._updateUI();
-      setTimeout(() => this._nextQ(), 1100);
     },
 
     _endGame() {

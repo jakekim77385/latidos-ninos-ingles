@@ -54,17 +54,27 @@
       letter-spacing: 0.04em;
     }
 
-    /* ── Speak button ───────────────────────── */
+    /* ── Speak buttons ───────────────────────── */
     .speak-btn {
       display: inline-flex; align-items: center; gap: 8px;
-      background: linear-gradient(135deg, var(--coral), #ff9a8b);
-      color: #fff; border: none; border-radius: var(--radius-full);
-      padding: 12px 28px; font-size: 1rem; font-weight: 800;
-      cursor: pointer; margin-top: 18px;
-      box-shadow: 0 4px 16px rgba(255,107,107,0.4);
+      border: none; border-radius: var(--radius-full);
+      padding: 11px 22px; font-size: 0.95rem; font-weight: 800;
+      cursor: pointer;
       transition: all var(--transition); font-family: var(--font);
     }
-    .speak-btn:hover { transform: translateY(-2px) scale(1.04); }
+    .speak-btn:hover { transform: translateY(-2px) scale(1.05); }
+    /* 알파벳 버튼: coral 계열 */
+    .speak-btn-letter {
+      background: linear-gradient(135deg, var(--coral), #ff9a8b);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(255,107,107,0.35);
+    }
+    /* 단어 버튼: blue 계열 */
+    .speak-btn-word {
+      background: linear-gradient(135deg, var(--blue), #74b9ff);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(74,144,226,0.35);
+    }
 
     /* ── Nav buttons ────────────────────────── */
     .learn-nav {
@@ -205,11 +215,14 @@
 
         <!-- 메인 카드 -->
         <div class="alpha-card">
-          <span class="alpha-big"  id="learn-big"   title="Click to hear">A</span>
+          <span class="alpha-big"  id="learn-big"   title="Click to hear the letter">A</span>
           <span class="alpha-small" id="learn-small">a</span>
-          <span class="alpha-emoji" id="learn-emoji">🍎</span>
+          <span class="alpha-emoji" id="learn-emoji" title="Click to hear the word" style="cursor:pointer;">🍎</span>
           <div class="alpha-word"   id="learn-word">Apple</div>
-          <button class="speak-btn" id="learn-speak">🔊 Listen</button>
+          <div style="display:flex; gap:10px; justify-content:center; margin-top:18px;">
+            <button class="speak-btn speak-btn-letter" id="learn-speak-letter" title="Hear the letter">🔤 Letter</button>
+            <button class="speak-btn speak-btn-word"   id="learn-speak-word"   title="Hear the word">🍎 Word</button>
+          </div>
         </div>
 
         <!-- prev / counter / next -->
@@ -219,13 +232,7 @@
           <button class="learn-nav-btn" id="learn-next" title="Next">▶</button>
         </div>
 
-        <!-- 빠른 선택 미니 그리드 -->
-        <div style="margin-top:20px;">
-          <p style="font-size:0.8rem;font-weight:700;color:var(--text-mid);margin-bottom:10px;text-align:center;">
-            🎯 Tap any letter to hear it!
-          </p>
-          <div class="learn-mini-grid" id="learn-mini-grid"></div>
-        </div>
+
 
       </div>
 

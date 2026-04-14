@@ -343,7 +343,7 @@
           ? 'linear-gradient(135deg,#fff 0%,var(--coral-light) 100%)'
           : 'linear-gradient(135deg,#fff 0%,var(--green-light) 100%)';
         const backBorder = isEmoji ? 'var(--coral-light)' : 'var(--green-light)';
-        const fontSize   = isEmoji ? 'clamp(1.6rem,4vw,2.4rem)' : 'clamp(0.75rem,2.5vw,1.05rem)';
+        const fontSize   = isEmoji ? 'clamp(2.8rem,7vw,3.8rem)' : 'clamp(1.2rem,3.5vw,1.6rem)';
         const color      = isEmoji ? 'var(--coral)' : 'var(--green-dark)';
 
         el.innerHTML = `
@@ -361,7 +361,8 @@
       if (this.locked || el.classList.contains('matched') || this.flipped.includes(el)) return;
       el.classList.add('flipped');
       this.flipped.push(el);
-      if (Speech.isSupported() && c.type === 'text') Speech.sayEnglish(c.word, { rate: 0.78 });
+      // 그림 카드든 단어 카드든 뒤집으면 영어로 소리 재생
+      if (Speech.isSupported()) Speech.sayEnglish(c.word, { rate: 0.78 });
 
       if (this.flipped.length === 2) {
         this.moves++;
@@ -477,16 +478,32 @@
         });
       }
 
-      if (Speech.isSupported()) Speech.sayEnglish(this.correct.word, { rate: 0.75 });
-
       const g = this.gs;
       if (ok) g.score++;
       else    g.lives = Math.max(0, g.lives - 1);
 
-      if (g.lives === 0) { setTimeout(() => this._endGame(), 900); return; }
-      g.q++;
-      this._updateUI();
-      setTimeout(() => this._nextQ(), 1100);
+      // 음성이 끝난 뒤 400ms 후 다음으로
+      let advanced = false;
+      const advance = () => {
+        if (advanced) return;
+        advanced = true;
+        if (g.lives === 0) { this._endGame(); return; }
+        g.q++;
+        this._updateUI();
+        this._nextQ();
+      };
+
+      if (Speech.isSupported()) {
+        const utt = Speech.sayEnglish(this.correct.word, { rate: 0.75 });
+        if (utt) {
+          utt.addEventListener('end', () => setTimeout(advance, 400));
+          setTimeout(advance, 6000);
+        } else {
+          setTimeout(advance, 1500);
+        }
+      } else {
+        setTimeout(advance, 1500);
+      }
     },
 
     _endGame() {
